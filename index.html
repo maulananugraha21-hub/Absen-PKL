@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Absensi PKL</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 Sistem Absensi PKL</h1>
+        </div>
+
+        <div class="clock">
+            <div class="time" id="clock">00:00:00</div>
+            <div class="date" id="date">Loading...</div>
+        </div>
+
+        <div class="alert alert-success" id="alertSuccess">
+            ✓ Berhasil!
+        </div>
+
+        <div class="alert alert-error" id="alertError">
+            ✗ Terjadi kesalahan!
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Memproses...</p>
+        </div>
+
+        <!-- LOGIN PAGE -->
+        <div id="loginPage" class="show">
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">Email Google</label>
+                    <input type="email" id="email" name="email" required placeholder="contoh@gmail.com" autocomplete="email">
+                </div>
+
+                <button type="submit" class="btn btn-login btn-group-single">
+                    <span>👤</span> Masuk
+                </button>
+            </form>
+        </div>
+
+        <!-- MAIN APP (After Login) -->
+        <div id="mainApp" style="display: none;">
+            <!-- PAGE CONTENT -->
+            <div class="pages-wrapper">
+                <!-- DASHBOARD PAGE (HOME + ABSENSI GABUNG) -->
+                <div id="dashboardPage" class="page show">
+                    <div class="welcome-section">
+                        <h2>Selamat Datang 👋</h2>
+                        <p>Silakan lakukan absensi Anda</p>
+                    </div>
+
+                    <!-- ABSENSI FORM -->
+                    <div class="absensi-section">
+                        <h3 style="color: var(--secondary-color); margin: 25px 0 15px;">📝 Form Absensi</h3>
+                        
+                        <form id="absenForm">
+                            <div class="form-group">
+                                <label for="absenDate">Tanggal Absen</label>
+                                <input type="date" id="absenDate" name="absenDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="tipeAbsen">Tipe Absensi</label>
+                                <select id="tipeAbsen" name="tipeAbsen" required onchange="toggleAlasanField()">
+                                    <option value="">Pilih Tipe Absensi</option>
+                                    <option value="Masuk">Absen Masuk</option>
+                                    <option value="Pulang">Absen Pulang</option>
+                                    <option value="Izin">Izin/Tidak Hadir</option>
+                                </select>
+                            </div>
+
+                            <!-- PULANG OPTIONS (Normal atau Lembur) -->
+                            <div class="form-group" id="pulangOptionsGroup" style="display: none;">
+                                <label>Jenis Pulang</label>
+                                <div class="radio-group">
+                                    <label class="radio-option">
+                                        <input type="radio" name="jenisPulang" value="Normal" onchange="updateRadioStyle()">
+                                        <span>⏱️ Normal</span>
+                                    </label>
+                                    <label class="radio-option">
+                                        <input type="radio" name="jenisPulang" value="Lembur" onchange="updateRadioStyle()">
+                                        <span>⏰ Lembur</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- SCOPE PEKERJAAN (untuk Pulang) -->
+                            <div class="form-group" id="scopePekerjaanGroup" style="display: none;">
+                                <label for="scopePekerjaan">Scope Pekerjaan</label>
+                                <textarea id="scopePekerjaan" name="scopePekerjaan" placeholder="Jelaskan pekerjaan apa yang Anda lakukan..."></textarea>
+                            </div>
+
+                            <!-- ALASAN (untuk Izin) -->
+                            <div class="form-group" id="alasanGroup" style="display: none;">
+                                <label for="alasan">Alasan Izin</label>
+                                <textarea id="alasan" name="alasan" placeholder="Jelaskan alasan izin Anda..."></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-masuk">
+                                <span>✓</span> Submit Absensi
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- RIWAYAT PAGE -->
+                <div id="riwayatPage" class="page">
+                    <div class="page-header">
+                        <h2>📜 Riwayat Absensi</h2>
+                        <p>Daftar absensi Anda</p>
+                    </div>
+
+                    <div class="filter-section">
+                        <div class="date-filter">
+                            <input type="date" id="filterDate" onchange="filterByDate()">
+                            <button class="btn-reset" onclick="resetFilter()">Reset</button>
+                        </div>
+
+                        <div class="search-box">
+                            <input type="text" id="searchRiwayat" placeholder="Cari absensi..." onkeyup="filterRiwayat()">
+                        </div>
+
+                        <div class="filter-buttons">
+                            <button class="filter-btn active" onclick="filterByType('semua')">Semua</button>
+                            <button class="filter-btn" onclick="filterByType('Masuk')">➡️ Masuk</button>
+                            <button class="filter-btn" onclick="filterByType('Pulang')">⬅️ Pulang</button>
+                            <button class="filter-btn" onclick="filterByType('Izin')">⚠️ Izin</button>
+                        </div>
+                    </div>
+
+                    <div id="riwayatList" class="riwayat-list">
+                        <div class="empty-state">
+                            <p>📭 Belum ada riwayat absensi</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PROFILE PAGE -->
+                <div id="profilePage" class="page">
+                    <div class="profile-header">
+                        <div class="avatar-large" id="userAvatarProfile">A</div>
+                        <h2 id="userNameProfile">User Name</h2>
+                    </div>
+
+                    <div class="profile-info">
+                        <div class="info-item">
+                            <span class="info-label">Email</span>
+                            <span class="info-value" id="profileEmail">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Asal Sekolah</span>
+                            <span class="info-value" id="profileAsalSekolah">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Site</span>
+                            <span class="info-value" id="profileSite">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Nomor Rekening</span>
+                            <span class="info-value" id="profileNomorRekening">-</span>
+                        </div>
+                    </div>
+
+                    <div class="profile-stats">
+                        <div class="stat-box">
+                            <span class="stat-number" id="statMasuk">0</span>
+                            <span class="stat-label">Absen Masuk</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-number" id="statPulangNormal">0</span>
+                            <span class="stat-label">Pulang Normal</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-number" id="statPulangLembur">0</span>
+                            <span class="stat-label">Pulang Lembur</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-number" id="statIzin">0</span>
+                            <span class="stat-label">Izin</span>
+                        </div>
+                    </div>
+
+                    <!-- PRINT SECTION removed -->
+
+                    <button class="btn btn-logout" onclick="logout()" style="width: 100%; margin-top: 20px;">
+                        <span>🚪</span> Logout
+                    </button>
+                </div>
+            </div>
+
+            <!-- NAVIGATION BAR (DI BAWAH) -->
+            <div class="navbar">
+                <button class="nav-btn active" onclick="showPage('dashboard')" data-page="dashboard">
+                    <span>🏠</span> Dashboard
+                </button>
+                <button class="nav-btn" onclick="showPage('riwayat')" data-page="riwayat">
+                    <span>📜</span> Riwayat
+                </button>
+                <button class="nav-btn" onclick="showPage('profile')" data-page="profile">
+                    <span>👤</span> Profile
+                </button>
+            </div>
+        </div>
+
+        <div class="footer">
+            Powered by Google Sheets
+        </div>
+    </div>
+
+    <!-- PRINT PREVIEW AREA removed -->
+
+    <script src="script.js" defer></script>
+</body>
+</html>
