@@ -7,7 +7,7 @@ let isLoadingUsers = true;
 // ========================================
 // KONFIGURASI GOOGLE SHEETS
 // ========================================
-let SCRIPT_URL = localStorage.getItem('SCRIPT_URL') || 'https://script.google.com/macros/s/AKfycbyVJRL38jpuBdnj96EjI3rht_l1RmY_JnCLZ9ZioIBUn93zXmVPJO_eo5orRmXMvXp0/exec';
+let SCRIPT_URL = localStorage.getItem('SCRIPT_URL') || 'https://script.google.com/macros/s/AKfycbwhtjUBJ7-lVk-s_CeDnOEx4C-ECmdzPjmMuFw-pujqhWFHjL2ZTFVX-zz6ZT7rGXvp/exec';
 
 function setScriptUrl(url) {
     if (!url) return false;
@@ -79,10 +79,8 @@ let filterType = 'semua';
 let filterDate = '';
 
 window.onload = async function() {
-    // Muat users dari Google Sheets
     await loadUsersFromSheets();
     
-    // Cek apakah ada user yang tersimpan di localStorage
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser && !isLoadingUsers) {
         currentUser = JSON.parse(savedUser);
@@ -90,14 +88,12 @@ window.onload = async function() {
         showMainApp();
         showPage('dashboard');
     }
-    // Set default date for absenDate input to today (YYYY-MM-DD)
+    
     const dateInput = document.getElementById('absenDate');
     if (dateInput) {
         const todayISO = new Date().toISOString().slice(0,10);
         dateInput.value = todayISO;
     }
-    
-    // printMonth input removed (export/print feature disabled)
 };
 
 // ========================================
@@ -132,7 +128,6 @@ updateClock();
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
 
-    // Cek apakah data user masih loading
     if (isLoadingUsers) {
         showAlert('error', 'Data user masih dimuat, silakan tunggu...');
         return;
@@ -145,10 +140,8 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         return;
     }
 
-    // Cari user berdasarkan email saja (passwordless)
     let user = USERS_DATA.find(u => u.email === email);
 
-    // Jika tidak ada data users (mis. belum terhubung ke Sheets), izinkan login sementara
     if (!user) {
         if (USERS_DATA.length === 0) {
             user = {
@@ -263,33 +256,27 @@ async function loadUserAbsenHistory() {
         } catch (parseErr) {
             console.error('❌ Response riwayat tidak bisa di-parse sebagai JSON:', parseErr, '\nResponse body:', text);
             showAlert('error', 'Gagal memuat riwayat: response server tidak valid');
-            const saved = localStorage.getItem('userAbsenHistory_' + currentUser.email);
-            userAbsenList = saved ? JSON.parse(saved) : [];
+            userAbsenList = [];
             return;
         }
 
-        // Log lengkap result untuk diagnosa
         console.log('DEBUG getAbsensi result:', result);
 
         if (!response.ok) {
             console.error('❌ Request error:', response.status, response.statusText, result);
             showAlert('error', 'Gagal memuat riwayat dari server: ' + response.status);
-            const saved = localStorage.getItem('userAbsenHistory_' + currentUser.email);
-            userAbsenList = saved ? JSON.parse(saved) : [];
+            userAbsenList = [];
             return;
         }
 
-        // Normalisasi berbagai bentuk response: prefer result.absensi, lalu result.users, lalu any array found
         let absensi = null;
         if (result && Array.isArray(result.absensi)) {
             absensi = result.absensi;
         } else if (result && Array.isArray(result.users)) {
-            // fallback jika server mengembalikan users
             absensi = result.users;
         } else if (Array.isArray(result)) {
             absensi = result;
         } else if (result && typeof result === 'object') {
-            // cari properti pertama yang berupa array
             for (const k in result) {
                 if (Object.prototype.hasOwnProperty.call(result, k) && Array.isArray(result[k])) {
                     absensi = result[k];
@@ -300,24 +287,17 @@ async function loadUserAbsenHistory() {
 
         if (absensi && Array.isArray(absensi)) {
             userAbsenList = absensi;
-            console.log('✅ Riwayat absensi berhasil dimuat (normalized):', userAbsenList.length, 'record(s)');
+            console.log('✅ Riwayat absensi berhasil dimuat:', userAbsenList.length, 'record(s)');
         } else {
             console.error('❌ Gagal memuat riwayat, response tidak mengandung array absensi:', result);
             showAlert('error', 'Gagal memuat riwayat: response server tidak mengandung data');
-            const saved = localStorage.getItem('userAbsenHistory_' + currentUser.email);
-            userAbsenList = saved ? JSON.parse(saved) : [];
+            userAbsenList = [];
         }
     } catch (error) {
         console.error('❌ Error loading riwayat:', error);
         showAlert('error', 'Gagal memuat riwayat dari server: ' + (error.message || error));
-        const saved = localStorage.getItem('userAbsenHistory_' + currentUser.email);
-        userAbsenList = saved ? JSON.parse(saved) : [];
+        userAbsenList = [];
     }
-}
-
-function saveUserAbsenHistory() {
-    // Tidak perlu lagi karena data disimpan langsung ke Google Sheets
-    console.log('Data disimpan ke Google Sheets, tidak perlu localStorage');
 }
 
 // ========================================
@@ -331,23 +311,37 @@ function displayRiwayat() {
         return;
     }
     
-    let filtered = [...userAbsenList];
+    // Filter data yang valid
+    let validAbsensi = userAbsenList.filter(a => {
+        const validTypes = ['Masuk', 'Pulang', 'Izin', 'Sakit'];
+        if (!validTypes.includes(a.tipeAbsen)) return false;
+        if (!a.tanggal || a.tanggal === '' || a.tanggal === 'Tanggal') return false;
+        
+        // Validasi: rowId harus >= 7 (data dimulai dari baris 7)
+        const rowNum = parseInt(a.rowId, 10);
+        if (isNaN(rowNum) || rowNum < 7) return false;
+        
+        return true;
+    });
     
-    // Filter by type
+    let filtered = [...validAbsensi];
+    
     if (filterType !== 'semua') {
         filtered = filtered.filter(a => a.tipeAbsen === filterType);
     }
     
-    // Filter by date
     if (filterDate) {
         filtered = filtered.filter(a => {
-            const absenDate = new Date(a.timestamp);
-            const selectedDate = new Date(filterDate);
-            return absenDate.toDateString() === selectedDate.toDateString();
+            const tanggalStr = a.tanggal || '';
+            return tanggalStr.includes(filterDate);
         });
     }
     
-    filtered.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    filtered.sort((a, b) => {
+        const dateA = new Date(a.tahun, getMonthIndex(a.bulan), a.tanggalAngka);
+        const dateB = new Date(b.tahun, getMonthIndex(b.bulan), b.tanggalAngka);
+        return dateB - dateA;
+    });
     
     if (filtered.length === 0) {
         riwayatList.innerHTML = '<div class="empty-state"><p>📭 Tidak ada data untuk filter ini</p></div>';
@@ -370,7 +364,6 @@ function displayRiwayat() {
             <div class="riwayat-item" data-rowid="${rowId}" data-type="${absen.tipeAbsen}">
                 <div class="riwayat-header">
                     <span class="riwayat-type">${icon} ${absen.tipeAbsen}</span>
-                    <span class="riwayat-time">${absen.waktu}</span>
                     <button class="btn-delete" onclick="handleDeleteRiwayat('${rowId}')" title="Hapus">🗑️</button>
                 </div>
                 <div class="riwayat-date">${displayDate}</div>
@@ -384,24 +377,27 @@ function displayRiwayat() {
     riwayatList.innerHTML = html;
 }
 
+function getMonthIndex(monthName) {
+    const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                   'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    return months.indexOf(monthName);
+}
+
 // ========================================
 // FUNGSI HAPUS RIWAYAT DARI GOOGLE SHEETS
 // ========================================
 async function handleDeleteRiwayat(rowId) {
-    // Validasi rowId
     if (!rowId || rowId === '' || rowId === 'undefined' || rowId === 'null') {
         console.error('❌ rowId tidak valid:', rowId);
         showAlert('error', 'ID data tidak valid. Pastikan data memiliki rowId dari server.');
         return;
     }
 
-    // Konfirmasi penghapusan
     const confirmMsg = 'Apakah Anda yakin ingin menghapus data absensi ini?\n\nTindakan ini tidak dapat dibatalkan!';
     if (!confirm(confirmMsg)) {
         return;
     }
 
-    // Validasi konfigurasi
     if (!SCRIPT_URL) {
         showAlert('error', 'URL Google Apps Script belum dikonfigurasi!');
         return;
@@ -412,20 +408,17 @@ async function handleDeleteRiwayat(rowId) {
         return;
     }
 
-    // Tampilkan loading
     document.getElementById('loading').style.display = 'block';
 
     try {
         console.log('🗑️ Menghapus riwayat dengan rowId:', rowId);
         console.log('📧 Email user:', currentUser.email);
         
-        // Siapkan data untuk dikirim
         const formData = new FormData();
         formData.append('action', 'deleteAbsensi');
         formData.append('rowId', String(rowId));
         formData.append('email', currentUser.email);
 
-        // Kirim request ke Google Apps Script
         const response = await fetch(SCRIPT_URL, {
             method: 'POST',
             mode: 'cors',
@@ -436,7 +429,6 @@ async function handleDeleteRiwayat(rowId) {
 
         console.log('📥 Response status:', response.status, response.statusText);
         
-        // Parse response
         const responseText = await response.text();
         console.log('📄 Response text:', responseText);
         
@@ -450,7 +442,6 @@ async function handleDeleteRiwayat(rowId) {
             return;
         }
 
-        // Cek status response
         if (!response.ok) {
             console.error('❌ HTTP error:', response.status, responseJson);
             showAlert('error', `Gagal menghapus: HTTP ${response.status} - ${responseJson?.message || 'Unknown error'}`);
@@ -463,15 +454,12 @@ async function handleDeleteRiwayat(rowId) {
             return;
         }
 
-        // Berhasil!
         console.log('✅ Data berhasil dihapus dari Google Sheets');
         showAlert('success', 'Data absensi berhasil dihapus! 🗑️');
         
-        // Reload data dari server
         console.log('🔄 Memuat ulang data...');
         await loadUserAbsenHistory();
         
-        // Update tampilan
         displayRiwayat();
         updateProfilePage();
         
@@ -479,12 +467,10 @@ async function handleDeleteRiwayat(rowId) {
         console.error('❌ Error saat menghapus:', error);
         showAlert('error', 'Terjadi kesalahan: ' + (error.message || 'Unknown error'));
     } finally {
-        // Sembunyikan loading
         document.getElementById('loading').style.display = 'none';
     }
 }
 
-// Fungsi lama untuk backward compatibility
 async function deleteRiwayat(rowId) {
     return handleDeleteRiwayat(rowId);
 }
@@ -540,11 +526,18 @@ function filterRiwayat() {
 // FUNGSI GET STATS
 // ========================================
 function getStats() {
+    // Filter hanya data valid (rowId >= 7)
+    const validAbsensi = userAbsenList.filter(a => {
+        const rowNum = parseInt(a.rowId, 10);
+        const validTypes = ['Masuk', 'Pulang', 'Izin', 'Sakit'];
+        return !isNaN(rowNum) && rowNum >= 7 && validTypes.includes(a.tipeAbsen);
+    });
+    
     return {
-        masuk: userAbsenList.filter(a => a.tipeAbsen === 'Masuk').length,
-        pulangNormal: userAbsenList.filter(a => a.tipeAbsen === 'Pulang' && a.jenisPulang === 'Normal').length,
-        pulangLembur: userAbsenList.filter(a => a.tipeAbsen === 'Pulang' && a.jenisPulang === 'Lembur').length,
-        izin: userAbsenList.filter(a => a.tipeAbsen === 'Izin').length
+        masuk: validAbsensi.filter(a => a.tipeAbsen === 'Masuk').length,
+        pulangNormal: validAbsensi.filter(a => a.tipeAbsen === 'Pulang' && a.jenisPulang === 'Normal').length,
+        pulangLembur: validAbsensi.filter(a => a.tipeAbsen === 'Pulang' && a.jenisPulang === 'Lembur').length,
+        izin: validAbsensi.filter(a => a.tipeAbsen === 'Izin').length
     };
 }
 
@@ -632,16 +625,16 @@ function toggleAlasanField() {
 }
 
 // ========================================
-// FUNGSI CEK ABSEN MASUK HARI INI DARI SERVER
+// FUNGSI CEK ABSEN MASUK HARI INI
 // ========================================
 function checkAbsenMasukHariIni(selectedDateStr) {
-    // selectedDateStr expected in YYYY-MM-DD format (from input[type=date])
     const targetDate = selectedDateStr ? new Date(selectedDateStr) : new Date();
     const targetDateString = targetDate.toLocaleDateString('id-ID');
     
     return userAbsenList.some(absen => {
-        const absenDate = new Date(absen.timestamp).toLocaleDateString('id-ID');
-        return absen.tipeAbsen === 'Masuk' && absenDate === targetDateString;
+        const absenDateString = `${absen.tanggalAngka}/${getMonthIndex(absen.bulan) + 1}/${absen.tahun}`;
+        const absenDate = new Date(absen.tahun, getMonthIndex(absen.bulan), absen.tanggalAngka);
+        return absen.tipeAbsen === 'Masuk' && absenDate.toLocaleDateString('id-ID') === targetDateString;
     });
 }
 
@@ -661,7 +654,6 @@ document.getElementById('absenForm').addEventListener('submit', async function(e
         return;
     }
 
-    // Ambil tanggal yang dipilih user
     const absenDateInput = document.getElementById('absenDate')?.value;
     if (!absenDateInput) {
         showAlert('error', 'Mohon pilih tanggal absen!');
@@ -694,15 +686,11 @@ document.getElementById('absenForm').addEventListener('submit', async function(e
     document.getElementById('loading').style.display = 'block';
     document.getElementById('absenForm').style.display = 'none';
 
-    const now = new Date();
-    const waktu = now.toLocaleTimeString('id-ID');
-
-    // Build a timestamp using the selected date and current time
-    const parts = absenDateInput.split('-'); // YYYY-MM-DD
+    const parts = absenDateInput.split('-');
     const year = parseInt(parts[0], 10);
     const monthIdx = parseInt(parts[1], 10) - 1;
     const dayNum = parseInt(parts[2], 10);
-    const timestampDate = new Date(year, monthIdx, dayNum, now.getHours(), now.getMinutes(), now.getSeconds());
+    const timestampDate = new Date(year, monthIdx, dayNum);
 
     const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
     const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
@@ -713,9 +701,7 @@ document.getElementById('absenForm').addEventListener('submit', async function(e
     const tahun = timestampDate.getFullYear();
 
     const data = {
-        timestamp: timestampDate.toISOString(),
         tanggal: `${hari}, ${tanggalAngka} ${bulan} ${tahun}`,
-        waktu: waktu,
         hari: hari,
         tanggalAngka: tanggalAngka,
         bulan: bulan,
@@ -766,8 +752,6 @@ document.getElementById('absenForm').addEventListener('submit', async function(e
                     return;
                 } else {
                     console.log('saveAbsensi sukses:', respJson || respText);
-                    
-                    // Reload riwayat dari server setelah sukses simpan
                     await loadUserAbsenHistory();
                 }
             } catch (postErr) {
@@ -832,5 +816,3 @@ function showAlert(type, message) {
         alertError.style.display = 'none';
     }, 5000);
 }
-
-// exportToExcel removed (feature disabled)
