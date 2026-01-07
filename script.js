@@ -7,7 +7,7 @@ let isLoadingUsers = true;
 // ========================================
 // KONFIGURASI GOOGLE SHEETS
 // ========================================
-let SCRIPT_URL = localStorage.getItem('SCRIPT_URL') || 'https://script.google.com/macros/s/AKfycbxM4ugdqCVS4ERQyvcvWA3z-g_lKpcTuziYhvwNNgLi2qgdGi5y547VoUOfFQyryrtf/exec';
+let SCRIPT_URL = localStorage.getItem('SCRIPT_URL') || 'https://script.google.com/macros/s/AKfycby4lPuGWZFRgeTipe6KSjaCg24OerWpFFOxMcv8L2Ul99IxT6aqQYHea9zIZE9Cj6QB/exec';
 
 function setScriptUrl(url) {
     if (!url) return false;
