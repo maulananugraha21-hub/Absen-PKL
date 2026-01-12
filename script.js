@@ -416,10 +416,32 @@ function displayRiwayat() {
     }
     
     if (filterDate) {
-        filtered = filtered.filter(a => {
-            const tanggalStr = a.tanggal || '';
-            return tanggalStr.includes(filterDate);
-        });
+        // Try to parse the calendar input (typically YYYY-MM-DD) and compare by year/month/day
+        const targetDate = (function() {
+            const v = filterDate;
+            if (!v) return null;
+            const d = new Date(v);
+            if (!isNaN(d)) {
+                d.setHours(0,0,0,0);
+                return d;
+            }
+            return null;
+        })();
+
+        if (targetDate) {
+            filtered = filtered.filter(a => {
+                const d = parseAbsensiToDate(a);
+                if (!d) return false;
+                d.setHours(0,0,0,0);
+                return d.getTime() === targetDate.getTime();
+            });
+        } else {
+            // fallback: string match (for older formats)
+            filtered = filtered.filter(a => {
+                const tanggalStr = a.tanggal || '';
+                return tanggalStr.includes(filterDate);
+            });
+        }
     }
     
     filtered.sort((a, b) => {
