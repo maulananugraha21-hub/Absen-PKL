@@ -87,6 +87,7 @@ window.onload = async function() {
         await loadUserAbsenHistory();
         showMainApp();
         showPage('dashboard');
+        showReminderIfNeeded();
     }
     
     const dateInput = document.getElementById('absenDate');
@@ -94,6 +95,7 @@ window.onload = async function() {
         const todayISO = new Date().toISOString().slice(0,10);
         dateInput.value = todayISO;
     }
+    
 };
 
 // ========================================
@@ -211,6 +213,7 @@ function showPage(pageName) {
     if (pageName === 'dashboard') {
         document.getElementById('dashboardPage').classList.add('show');
         document.querySelector('[data-page="dashboard"]').classList.add('active');
+        showReminderIfNeeded();
     } else if (pageName === 'riwayat') {
         document.getElementById('riwayatPage').classList.add('show');
         document.querySelector('[data-page="riwayat"]').classList.add('active');
@@ -301,6 +304,88 @@ async function loadUserAbsenHistory() {
 }
 
 // ========================================
+// FUNGSI CEK ABSENSI KEMARIN & HARI INI
+// ========================================
+
+function getAbsenStatusKemarin() {
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toLocaleDateString('id-ID');
+
+    let adaMasukKemarin = false;
+    let adaPulangKemarin = false;
+
+    userAbsenList.forEach(absen => {
+        const absenDate = parseAbsensiToDate(absen);
+        if (!absenDate) return;
+        const absenDateStr = absenDate.toLocaleDateString('id-ID');
+        if (absenDateStr === yesterdayStr) {
+            if (absen.tipeAbsen === 'Masuk') adaMasukKemarin = true;
+            if (absen.tipeAbsen === 'Pulang') adaPulangKemarin = true;
+        }
+    });
+
+    return {
+        adaMasukKemarin,
+        adaPulangKemarin,
+        belumPulangKemarin: adaMasukKemarin && !adaPulangKemarin
+    };
+}
+
+function getAbsenStatusHariIni(selectedDateStr) {
+    const targetDate = selectedDateStr ? new Date(selectedDateStr) : new Date();
+    const targetDateStr = targetDate.toLocaleDateString('id-ID');
+
+    let adaMasuk = false;
+    let adaPulang = false;
+
+    userAbsenList.forEach(absen => {
+        const absenDate = parseAbsensiToDate(absen);
+        if (!absenDate) return;
+        const absenDateStr = absenDate.toLocaleDateString('id-ID');
+        if (absenDateStr === targetDateStr) {
+            if (absen.tipeAbsen === 'Masuk') adaMasuk = true;
+            if (absen.tipeAbsen === 'Pulang') adaPulang = true;
+        }
+    });
+
+    return { adaMasuk, adaPulang };
+}
+
+// Tambahkan di fungsi showPage('dashboard') atau window.onload
+function showReminderIfNeeded() {
+    const statusKemarin = getAbsenStatusKemarin();
+    const reminderDiv = document.getElementById('absensiReminder');
+    
+    if (!reminderDiv) {
+        const reminderHTML = `
+            <div id="absensiReminder" class="reminder-box" style="display: none;">
+                <div class="reminder-icon">⚠️</div>
+                <div class="reminder-text">
+                    <strong>Pengingat:</strong>
+                    <span id="reminderMessage"></span>
+                </div>
+            </div>
+        `;
+        document.querySelector('.absensi-section').insertAdjacentHTML('beforebegin', reminderHTML);
+    }
+    
+    const reminderBox = document.getElementById('absensiReminder');
+    const reminderMessage = document.getElementById('reminderMessage');
+    
+    if (statusKemarin.belumPulangKemarin) {
+        reminderMessage.textContent = 'Anda belum absen PULANG kemarin. Mohon lengkapi terlebih dahulu!';
+        reminderBox.style.display = 'flex';
+        reminderBox.style.background = '#fff3cd';
+        reminderBox.style.border = '2px solid #ffc107';
+    } else {
+        reminderBox.style.display = 'none';
+    }
+}
+
+
+// ========================================
 // FUNGSI DISPLAY RIWAYAT
 // ========================================
 function displayRiwayat() {
@@ -319,7 +404,7 @@ function displayRiwayat() {
         
         // Validasi: rowId harus >= 7 (data dimulai dari baris 7)
         const rowNum = parseInt(a.rowId, 10);
-        if (isNaN(rowNum) || rowNum < 7) return false;
+        if (isNaN(rowNum) || rowNum < 9) return false;
         
         return true;
     });
@@ -349,30 +434,75 @@ function displayRiwayat() {
     }
     
     let html = '';
-    filtered.forEach((absen) => {
-        const rowId = absen.rowId || '';
-        const icon = absen.tipeAbsen === 'Masuk' ? '➡️' : absen.tipeAbsen === 'Pulang' ? '⬅️' : '⚠️';
-        const alasan = absen.alasan && absen.alasan !== '-' ? `<div class="riwayat-detail"><strong>Alasan:</strong> ${absen.alasan}</div>` : '';
-        const scope = absen.scopePekerjaan && absen.scopePekerjaan !== '-' ? `<div class="riwayat-detail"><strong>Scope:</strong> ${absen.scopePekerjaan}</div>` : '';
-        const jenisPulang = absen.jenisPulang && absen.jenisPulang !== '-' ? `<div class="riwayat-detail"><strong>Jenis:</strong> ${absen.jenisPulang}</div>` : '';
+    // Di fungsi displayRiwayat(), bagian mapping riwayat
+filtered.forEach((absen) => {
+    const rowId = absen.rowId || '';
+    const icon = absen.tipeAbsen === 'Masuk' ? '➡️' : absen.tipeAbsen === 'Pulang' ? '⬅️' : '⚠️';
+    const alasan = absen.alasan && absen.alasan !== '-' ? `<div class="riwayat-detail"><strong>Alasan:</strong> ${absen.alasan}</div>` : '';
+    const scope = absen.scopePekerjaan && absen.scopePekerjaan !== '-' ? `<div class="riwayat-detail"><strong>Scope:</strong> ${absen.scopePekerjaan}</div>` : '';
+    const jenisPulang = absen.jenisPulang && absen.jenisPulang !== '-' ? `<div class="riwayat-detail"><strong>Jenis:</strong> ${absen.jenisPulang}</div>` : '';
 
-        const displayDate = absen.hari && absen.tanggalAngka && absen.bulan && absen.tahun
-            ? `${absen.hari}, ${absen.tanggalAngka} ${absen.bulan} ${absen.tahun}`
-            : (absen.tanggal || '');
+    // ✅ Konversi ISO Date ke format Indonesia
+    let displayDate = absen.tanggal || '-';
+        // Cek apakah format ISO (mengandung T dan Z)
+    if (typeof displayDate === 'string' && displayDate.includes('T')) {
+        try {
+            const dateObj = new Date(displayDate);
+            const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
+                           'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            
+            const hari = days[dateObj.getDay()];
+            const tanggal = dateObj.getDate();
+            const bulan = months[dateObj.getMonth()];
+            const tahun = dateObj.getFullYear();
+            
+            displayDate = `${hari}, ${tanggal} ${bulan} ${tahun}`;
+        } catch (err) {
+            console.error('Error parsing date:', err);
+            displayDate = absen.tanggal; // fallback ke original
+        }
+    }
 
-        html += `
-            <div class="riwayat-item" data-rowid="${rowId}" data-type="${absen.tipeAbsen}">
-                <div class="riwayat-header">
-                    <span class="riwayat-type">${icon} ${absen.tipeAbsen}</span>
-                    <button class="btn-delete" onclick="handleDeleteRiwayat('${rowId}')" title="Hapus">🗑️</button>
-                </div>
-                <div class="riwayat-date">${displayDate}</div>
-                ${alasan}
-                ${jenisPulang}
-                ${scope}
+    // Tandai jika ini entri MASUK dan belum ada PULANG pada tanggal yang sama
+    let badgeHtml = '';
+    try {
+        const absenDateObj = parseAbsensiToDate(absen);
+        if (absen.tipeAbsen === 'Masuk' && absenDateObj) {
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const absenDay = new Date(absenDateObj.getFullYear(), absenDateObj.getMonth(), absenDateObj.getDate());
+            if (absenDay <= today) {
+                const pulangExists = userAbsenList.some(a => {
+                    if (a.tipeAbsen !== 'Pulang') return false;
+                    const d = parseAbsensiToDate(a);
+                    if (!d) return false;
+                    const da = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+                    return da.toLocaleDateString('id-ID') === absenDay.toLocaleDateString('id-ID');
+                });
+                if (!pulangExists) {
+                    badgeHtml = `<div class="riwayat-badge" style="color:#856404;background:#fff3cd;padding:4px;border-radius:4px;display:inline-block;margin-left:8px;font-size:0.9em">Belum Pulang</div>`;
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Error checking pulang status for badge:', e);
+    }
+
+    html += `
+        <div class="riwayat-item" data-rowid="${rowId}" data-type="${absen.tipeAbsen}">
+            <div class="riwayat-header">
+                <span class="riwayat-type">${icon} ${absen.tipeAbsen}</span>
+                ${badgeHtml}
+                <button class="btn-delete" onclick="handleDeleteRiwayat('${rowId}')" title="Hapus">🗑️</button>
             </div>
-        `;
-    });
+            <div class="riwayat-date">${displayDate}</div>
+            ${alasan}
+            ${jenisPulang}
+            ${scope}
+        </div>
+    `;
+});
     
     riwayatList.innerHTML = html;
 }
@@ -381,6 +511,68 @@ function getMonthIndex(monthName) {
     const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
                    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
     return months.indexOf(monthName);
+}
+
+// Helper: parse an absensi record into a Date object (tries several formats)
+function parseAbsensiToDate(absen) {
+    if (!absen) return null;
+
+    // 1) If `tanggal` is an ISO string (contains 'T')
+    if (absen.tanggal && typeof absen.tanggal === 'string') {
+        const s = absen.tanggal.trim();
+        if (s.includes('T')) {
+            const d = new Date(s);
+            if (!isNaN(d)) return d;
+        }
+
+        // 2) If `tanggal` like "Hari, DD Bulan YYYY" (e.g. "Senin, 12 Januari 2026")
+        let parts = null;
+        if (s.includes(',')) parts = s.split(', ')[1];
+        if (parts) {
+            const parts2 = parts.split(' ');
+            if (parts2.length >= 3) {
+                const day = parseInt(parts2[0], 10);
+                const monthIdx = getMonthIndex(parts2[1]);
+                const year = parseInt(parts2[2], 10);
+                if (!isNaN(day) && monthIdx >= 0 && !isNaN(year)) {
+                    return new Date(year, monthIdx, day);
+                }
+            }
+        }
+
+        // 2b) Also accept format without weekday: "DD Bulan YYYY" (e.g. "12 Januari 2026")
+        const dmYParts = s.match(/^(\d{1,2})\s+([A-Za-zÀ-ž]+)\s+(\d{4})$/);
+        if (dmYParts) {
+            const day = parseInt(dmYParts[1], 10);
+            const monthIdx = getMonthIndex(dmYParts[2]);
+            const year = parseInt(dmYParts[3], 10);
+            if (!isNaN(day) && monthIdx >= 0 && !isNaN(year)) {
+                return new Date(year, monthIdx, day);
+            }
+        }
+
+        // 3) If `tanggal` like DD/MM/YYYY
+        const dmYMatch = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        if (dmYMatch) {
+            const day = parseInt(dmYMatch[1], 10);
+            const month = parseInt(dmYMatch[2], 10) - 1;
+            const year = parseInt(dmYMatch[3], 10);
+            const d = new Date(year, month, day);
+            if (!isNaN(d)) return d;
+        }
+    }
+
+    // 4) If separate fields exist: tanggalAngka, bulan, tahun
+    if (absen.tahun && absen.bulan && absen.tanggalAngka !== undefined) {
+        const year = parseInt(absen.tahun, 10);
+        const monthIdx = typeof absen.bulan === 'number' ? absen.bulan : getMonthIndex(absen.bulan);
+        const day = parseInt(absen.tanggalAngka, 10);
+        if (!isNaN(year) && !isNaN(monthIdx) && monthIdx >= 0 && !isNaN(day)) {
+            return new Date(year, monthIdx, day);
+        }
+    }
+
+    return null;
 }
 
 // ========================================
@@ -630,48 +822,90 @@ function toggleAlasanField() {
 function checkAbsenMasukHariIni(selectedDateStr) {
     const targetDate = selectedDateStr ? new Date(selectedDateStr) : new Date();
     const targetDateString = targetDate.toLocaleDateString('id-ID');
-    
+
     return userAbsenList.some(absen => {
-        const absenDateString = `${absen.tanggalAngka}/${getMonthIndex(absen.bulan) + 1}/${absen.tahun}`;
-        const absenDate = new Date(absen.tahun, getMonthIndex(absen.bulan), absen.tanggalAngka);
+        const absenDate = parseAbsensiToDate(absen);
+        if (!absenDate) return false;
         return absen.tipeAbsen === 'Masuk' && absenDate.toLocaleDateString('id-ID') === targetDateString;
     });
 }
 
 // ========================================
-// FUNGSI SUBMIT ABSENSI
+// FUNGSI SUBMIT ABSENSI (DENGAN DEBUG)
 // ========================================
 document.getElementById('absenForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
+    console.log('=== FORM SUBMIT DEBUG ===');
+    
     const tipeAbsen = document.getElementById('tipeAbsen').value;
     const alasan = document.getElementById('alasan').value.trim();
     const scopePekerjaan = document.getElementById('scopePekerjaan').value.trim();
-    const jenisPulang = document.querySelector('input[name="jenisPulang"]:checked')?.value || '';
+    const jenisPulangElement = document.querySelector('input[name="jenisPulang"]:checked');
+    const jenisPulang = jenisPulangElement?.value || '';
+    
+    console.log('tipeAbsen:', tipeAbsen);
+    console.log('alasan:', alasan);
+    console.log('scopePekerjaan:', scopePekerjaan);
+    console.log('jenisPulang:', jenisPulang);
+    console.log('jenisPulangElement:', jenisPulangElement);
 
+    // VALIDASI 1: Tipe Absen
     if (!tipeAbsen) {
+        console.error('❌ Validation failed: tipeAbsen kosong');
         showAlert('error', 'Mohon pilih tipe absensi!');
         return;
     }
 
+    // VALIDASI 2: Tanggal
     const absenDateInput = document.getElementById('absenDate')?.value;
     if (!absenDateInput) {
+        console.error('❌ Validation failed: tanggal kosong');
         showAlert('error', 'Mohon pilih tanggal absen!');
         return;
     }
+    console.log('absenDateInput:', absenDateInput);
 
-    if (tipeAbsen === 'Masuk') {
-        if (checkAbsenMasukHariIni(absenDateInput)) {
-            showAlert('error', 'Anda sudah melakukan absen masuk pada tanggal tersebut!');
-            return;
-        }
+    // ========================================
+    // VALIDASI BARU: CEK STATUS KEMARIN & HARI INI
+    // ========================================
+    const statusKemarin = getAbsenStatusKemarin();
+    const statusHariIni = getAbsenStatusHariIni(absenDateInput);
+    
+    // Cek apakah tanggal yang dipilih adalah hari ini atau masa depan
+    const selectedDate = new Date(absenDateInput);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    selectedDate.setHours(0, 0, 0, 0);
+    
+    const isToday = selectedDate.getTime() === today.getTime();
+    const isFuture = selectedDate > today;
+    
+    // VALIDASI: Jika kemarin belum pulang, tidak bisa absen hari ini/masa depan
+    if ((isToday || isFuture) && statusKemarin.belumPulangKemarin) {
+        showAlert('error', '⚠️ Anda belum absen PULANG kemarin! Mohon lengkapi absensi kemarin terlebih dahulu.');
+        return;
+    }
+    
+    // VALIDASI: Absen PULANG hanya bisa jika sudah MASUK di hari yang sama
+    if (tipeAbsen === 'Pulang' && !statusHariIni.adaMasuk) {
+        showAlert('error', '⚠️ Anda belum absen MASUK pada tanggal ini! Mohon absen masuk terlebih dahulu.');
+        return;
+    }
+    
+    // VALIDASI: Absen MASUK tidak boleh duplikat
+    if (tipeAbsen === 'Masuk' && statusHariIni.adaMasuk) {
+        showAlert('error', '⚠️ Anda sudah melakukan absen MASUK pada tanggal ini!');
+        return;
     }
 
+        // VALIDASI 3: Izin (butuh alasan)
     if (tipeAbsen === 'Izin' && !alasan) {
         showAlert('error', 'Mohon isi alasan izin!');
         return;
     }
 
+    // VALIDASI 4: Pulang (butuh jenis pulang & scope)
     if (tipeAbsen === 'Pulang') {
         if (!jenisPulang) {
             showAlert('error', 'Mohon pilih jenis pulang (Normal atau Lembur)!');
@@ -683,6 +917,9 @@ document.getElementById('absenForm').addEventListener('submit', async function(e
         }
     }
 
+    console.log('✅ Semua validasi passed!');
+
+    // Lanjutkan proses submit...
     document.getElementById('loading').style.display = 'block';
     document.getElementById('absenForm').style.display = 'none';
 
@@ -716,6 +953,8 @@ document.getElementById('absenForm').addEventListener('submit', async function(e
         jenisPulang: tipeAbsen === 'Pulang' ? jenisPulang : '-',
         scopePekerjaan: tipeAbsen === 'Pulang' ? scopePekerjaan : '-'
     };
+
+    console.log('📤 Data yang akan dikirim:', data);
 
     try {
         if (SCRIPT_URL) {
@@ -786,7 +1025,7 @@ document.getElementById('absenForm').addEventListener('submit', async function(e
         }, 2000);
 
     } catch (error) {
-        console.error('Error:', error);
+        console.error('❌ Error:', error);
         showAlert('error', 'Gagal mengirim data: ' + error.message);
     } finally {
         document.getElementById('loading').style.display = 'none';
