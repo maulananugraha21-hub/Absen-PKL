@@ -70,7 +70,7 @@
                                     <option value="">Pilih Tipe Absensi</option>
                                     <option value="Masuk">Absen Masuk</option>
                                     <option value="Pulang">Absen Pulang</option>
-                                    <option value="Izin">Tidak Hadir</option>
+                                    <option value="Izin">Izin</option>
                                 </select>
                             </div>
 
@@ -97,7 +97,7 @@
 
                             <!-- ALASAN (untuk Izin) -->
                             <div class="form-group" id="alasanGroup" style="display: none;">
-                                <label for="alasan">Alasan Izin</label>
+                                <label for="alasan">Keterangan Izin</label>
                                 <textarea id="alasan" name="alasan" placeholder="Jelaskan alasan izin Anda..."></textarea>
                             </div>
 
@@ -114,7 +114,7 @@
                         <h2>📜 Riwayat Absensi</h2>
                         <p>Daftar absensi Anda</p>
                     </div>
-
+                    
                     <div class="filter-section">
                         <div class="date-filter">
                             <input type="date" id="filterDate" onchange="filterByDate()">
@@ -166,6 +166,14 @@
                         </div>
                     </div>
 
+                    <!-- ✅ FILTER BULAN (BARU) -->
+                    <div class="month-filter-section">
+                        <label for="monthFilter">📅 Filter Bulan:</label>
+                        <select id="monthFilter" onchange="updateProfileStats()">
+                            <option value="all">Semua Bulan</option>
+                        </select>
+                    </div>
+
                     <div class="profile-stats">
                         <div class="stat-box">
                             <span class="stat-number" id="statMasuk">0</span>
@@ -184,8 +192,6 @@
                             <span class="stat-label">Izin</span>
                         </div>
                     </div>
-
-                    <!-- PRINT SECTION removed -->
 
                     <button class="btn btn-logout" onclick="logout()" style="width: 100%; margin-top: 20px;">
                         <span>🚪</span> Logout
@@ -211,8 +217,6 @@
             Powered by Google Sheets
         </div>
     </div>
-
-    <!-- PRINT PREVIEW AREA removed -->
 
     <script src="script.js" defer></script>
 </body>
