@@ -737,15 +737,74 @@ function filterRiwayat() {
 }
 
 // ========================================
-// FUNGSI GET STATS
+// ✅ FUNGSI POPULATE MONTH FILTER (BARU)
 // ========================================
-function getStats() {
-    // Filter hanya data valid (rowId >= 7)
-    const validAbsensi = userAbsenList.filter(a => {
+function populateMonthFilter() {
+    const monthFilter = document.getElementById('monthFilter');
+    if (!monthFilter) return;
+    
+    // Clear existing options except "Semua Bulan"
+    monthFilter.innerHTML = '<option value="all">Semua Bulan</option>';
+    
+    if (userAbsenList.length === 0) return;
+    
+    // Extract unique months from userAbsenList
+    const monthsSet = new Set();
+    
+    userAbsenList.forEach(absen => {
+        const date = parseAbsensiToDate(absen);
+        if (!date) return;
+        
+        const year = date.getFullYear();
+        const month = date.getMonth(); // 0-11
+        const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`; // Format: 2025-01
+        monthsSet.add(monthKey);
+    });
+    
+    // Convert to array and sort (newest first)
+    const monthsArray = Array.from(monthsSet).sort().reverse();
+    
+    // Nama bulan Indonesia
+    const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                       'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    
+    // Add options
+    monthsArray.forEach(monthKey => {
+        const [year, month] = monthKey.split('-');
+        const monthIndex = parseInt(month) - 1;
+        const displayText = `${monthNames[monthIndex]} ${year}`;
+        
+        const option = document.createElement('option');
+        option.value = monthKey;
+        option.textContent = displayText;
+        monthFilter.appendChild(option);
+    });
+}
+
+// ========================================
+// ✅ FUNGSI GET STATS (UPDATED WITH FILTER)
+// ========================================
+function getStats(filterMonth = 'all') {
+    // Filter hanya data valid (rowId >= 9)
+    let validAbsensi = userAbsenList.filter(a => {
         const rowNum = parseInt(a.rowId, 10);
         const validTypes = ['Masuk', 'Pulang', 'Izin', 'Sakit'];
-        return !isNaN(rowNum) && rowNum >= 7 && validTypes.includes(a.tipeAbsen);
+        return !isNaN(rowNum) && rowNum >= 9 && validTypes.includes(a.tipeAbsen);
     });
+    
+    // ✅ FILTER BY MONTH
+    if (filterMonth !== 'all') {
+        validAbsensi = validAbsensi.filter(a => {
+            const date = parseAbsensiToDate(a);
+            if (!date) return false;
+            
+            const year = date.getFullYear();
+            const month = date.getMonth() + 1; // 1-12
+            const absenMonthKey = `${year}-${String(month).padStart(2, '0')}`;
+            
+            return absenMonthKey === filterMonth;
+        });
+    }
     
     return {
         masuk: validAbsensi.filter(a => a.tipeAbsen === 'Masuk').length,
@@ -756,13 +815,32 @@ function getStats() {
 }
 
 // ========================================
-// FUNGSI UPDATE PROFILE PAGE
+// ✅ FUNGSI UPDATE PROFILE STATS (BARU)
+// ========================================
+function updateProfileStats() {
+    const monthFilter = document.getElementById('monthFilter');
+    const selectedMonth = monthFilter ? monthFilter.value : 'all';
+    
+    const stats = getStats(selectedMonth);
+    
+    const elStatMasuk = document.getElementById('statMasuk');
+    const elStatPulangNormal = document.getElementById('statPulangNormal');
+    const elStatPulangLembur = document.getElementById('statPulangLembur');
+    const elStatIzin = document.getElementById('statIzin');
+    
+    if (elStatMasuk) elStatMasuk.textContent = stats.masuk;
+    if (elStatPulangNormal) elStatPulangNormal.textContent = stats.pulangNormal;
+    if (elStatPulangLembur) elStatPulangLembur.textContent = stats.pulangLembur;
+    if (elStatIzin) elStatIzin.textContent = stats.izin;
+}
+
+// ========================================
+// ✅ FUNGSI UPDATE PROFILE PAGE (UPDATED)
 // ========================================
 function updateProfilePage() {
     if (!currentUser) return;
     
     const avatar = currentUser.nama.charAt(0).toUpperCase();
-    const stats = getStats();
     
     const elAvatarProfile = document.getElementById('userAvatarProfile');
     const elNameProfile = document.getElementById('userNameProfile');
@@ -770,11 +848,6 @@ function updateProfilePage() {
     const elAsalSekolah = document.getElementById('profileAsalSekolah');
     const elSite = document.getElementById('profileSite');
     const elNomorRekening = document.getElementById('profileNomorRekening');
-    const elAlamat = document.getElementById('profileAlamat');
-    const elStatMasuk = document.getElementById('statMasuk');
-    const elStatPulangNormal = document.getElementById('statPulangNormal');
-    const elStatPulangLembur = document.getElementById('statPulangLembur');
-    const elStatIzin = document.getElementById('statIzin');
     
     if (elAvatarProfile) elAvatarProfile.textContent = avatar;
     if (elNameProfile) elNameProfile.textContent = currentUser.nama;
@@ -782,12 +855,10 @@ function updateProfilePage() {
     if (elAsalSekolah) elAsalSekolah.textContent = currentUser.asalSekolah || '-';
     if (elSite) elSite.textContent = currentUser.site || '-';
     if (elNomorRekening) elNomorRekening.textContent = currentUser.nomorRekening || '-';
-    if (elAlamat) elAlamat.textContent = currentUser.alamat || '-';
     
-    if (elStatMasuk) elStatMasuk.textContent = stats.masuk;
-    if (elStatPulangNormal) elStatPulangNormal.textContent = stats.pulangNormal;
-    if (elStatPulangLembur) elStatPulangLembur.textContent = stats.pulangLembur;
-    if (elStatIzin) elStatIzin.textContent = stats.izin;
+    // ✅ POPULATE MONTH FILTER & UPDATE STATS
+    populateMonthFilter();
+    updateProfileStats();
 }
 
 // ========================================
