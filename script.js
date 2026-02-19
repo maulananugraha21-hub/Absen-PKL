@@ -202,6 +202,16 @@ function showMainApp() {
 }
 
 function showPage(pageName) {
+    const clockElement = document.querySelector('.clock');
+    const headerElement = document.querySelector('.header');
+
+    if (clockElement) {
+        clockElement.style.display = pageName === 'profile' ? 'none' : 'block';
+    }
+    if (headerElement) {
+        headerElement.style.display = pageName === 'profile' ? 'none' : 'block';
+    }
+
     document.querySelectorAll('.page').forEach(page => {
         page.classList.remove('show');
     });
