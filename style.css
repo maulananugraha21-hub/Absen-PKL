@@ -1,8 +1,12 @@
 /* ====== WARNA TEMA BARU ====== */
 :root {
-    --primary-color: #DFF4FF;
-    --primary-dark: #4A8BB7;
-    --secondary-color: #19456B;
+    --primary-color: #e8eeff;
+    --primary-dark: #315acb;
+    --secondary-color: #4169E1;
+    --primary-soft: #f3f6ff;
+    --primary-border: #c9d5fb;
+    --focus-ring: rgba(65, 105, 225, 0.2);
+    --text-muted: #5f6b8a;
 }
 
 * {
@@ -55,7 +59,7 @@ body {
 }
 
 .header p {
-    color: #555;
+    color: var(--text-muted);
     font-size: 14px;
 }
 
@@ -87,7 +91,7 @@ body {
     gap: 10px;
     margin-top: 25px;
     padding-top: 15px;
-    border-top: 2px solid #e0e0e0;
+    border-top: 2px solid var(--primary-border);
     position: sticky;
     bottom: 0;
     background: white;
@@ -96,8 +100,8 @@ body {
 .nav-btn {
     padding: 10px;
     border: none;
-    background: #f5f5f5;
-    color: #666;
+    background: var(--primary-soft);
+    color: var(--text-muted);
     border-radius: 10px;
     cursor: pointer;
     font-size: 12px;
@@ -110,7 +114,7 @@ body {
 }
 
 .nav-btn:hover {
-    background: #e0e0e0;
+    background: #dce5ff;
 }
 
 .nav-btn.active {
@@ -167,8 +171,8 @@ body {
     padding: 15px 20px;
     border-radius: 12px;
     margin-bottom: 20px;
-    background: #fff3cd;
-    border: 2px solid #ffc107;
+    background: #eef3ff;
+    border: 2px solid var(--primary-border);
 }
 
 .reminder-icon {
@@ -178,7 +182,7 @@ body {
 
 .reminder-text {
     flex: 1;
-    color: #856404;
+    color: var(--secondary-color);
 }
 
 .reminder-text strong {
@@ -195,9 +199,9 @@ body {
     text-align: center;
     margin-bottom: 30px;
     padding: 30px 20px;
-    background: linear-gradient(135deg, var(--primary-color), #f0f8ff);
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-soft));
     border-radius: 15px;
-    border: 2px solid #e0e0e0;
+    border: 2px solid var(--primary-border);
 }
 
 .welcome-section h2 {
@@ -207,13 +211,13 @@ body {
 }
 
 .welcome-section p {
-    color: #666;
+    color: var(--text-muted);
     font-size: 14px;
 }
 
 /* ABSENSI SECTION */
 .absensi-section {
-    border-top: 2px solid #e0e0e0;
+    border-top: 2px solid var(--primary-border);
     padding-top: 20px;
 }
 
@@ -230,7 +234,7 @@ body {
 }
 
 .page-header p {
-    color: #666;
+    color: var(--text-muted);
     font-size: 14px;
 }
 
@@ -249,7 +253,7 @@ body {
 .date-filter input[type="date"] {
     flex: 1;
     padding: 12px 15px;
-    border: 2px solid #e0e0e0;
+    border: 2px solid var(--primary-border);
     border-radius: 10px;
     font-size: 14px;
     transition: all 0.3s;
@@ -258,14 +262,14 @@ body {
 .date-filter input[type="date"]:focus {
     outline: none;
     border-color: var(--primary-dark);
-    box-shadow: 0 0 0 3px rgba(74, 139, 183, 0.2);
+    box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 .btn-reset {
     padding: 12px 20px;
-    border: 2px solid #e0e0e0;
+    border: 2px solid var(--primary-border);
     background: white;
-    color: #666;
+    color: var(--text-muted);
     border-radius: 10px;
     cursor: pointer;
     font-size: 14px;
@@ -274,7 +278,7 @@ body {
 }
 
 .btn-reset:hover {
-    background: #f5f5f5;
+    background: var(--primary-soft);
     border-color: var(--primary-dark);
 }
 
@@ -286,7 +290,7 @@ body {
 .search-box input {
     width: 100%;
     padding: 12px 15px;
-    border: 2px solid #e0e0e0;
+    border: 2px solid var(--primary-border);
     border-radius: 10px;
     font-size: 14px;
     transition: all 0.3s;
@@ -295,7 +299,7 @@ body {
 .search-box input:focus {
     outline: none;
     border-color: var(--primary-dark);
-    box-shadow: 0 0 0 3px rgba(74, 139, 183, 0.2);
+    box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 /* FILTER BUTTONS */
@@ -308,9 +312,9 @@ body {
 
 .filter-btn {
     padding: 10px;
-    border: 2px solid #e0e0e0;
+    border: 2px solid var(--primary-border);
     background: white;
-    color: #666;
+    color: var(--text-muted);
     border-radius: 8px;
     cursor: pointer;
     font-size: 12px;
@@ -320,7 +324,7 @@ body {
 
 .filter-btn:hover {
     border-color: var(--primary-dark);
-    background: #f5f5f5;
+    background: var(--primary-soft);
 }
 
 .filter-btn.active {
@@ -336,7 +340,7 @@ body {
 }
 
 .riwayat-item {
-    background: #f9f9f9;
+    background: var(--primary-soft);
     padding: 15px;
     border-radius: 10px;
     margin-bottom: 12px;
@@ -345,7 +349,7 @@ body {
 }
 
 .riwayat-item:hover {
-    background: #f0f0f0;
+    background: #e9efff;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -364,7 +368,7 @@ body {
 }
 
 .riwayat-time {
-    color: #999;
+    color: #8090bc;
     font-size: 12px;
     margin-right: 10px;
 }
@@ -394,14 +398,14 @@ body {
 }
 
 .riwayat-date {
-    color: #666;
+    color: var(--text-muted);
     font-size: 12px;
     margin-bottom: 8px;
 }
 
 .riwayat-detail {
     font-size: 12px;
-    color: #777;
+    color: #6574a4;
     padding: 8px;
     background: white;
     border-radius: 8px;
@@ -411,7 +415,7 @@ body {
 .empty-state {
     text-align: center;
     padding: 40px 20px;
-    color: #999;
+    color: #8090bc;
 }
 
 /* PROFILE INFO */
@@ -419,7 +423,7 @@ body {
     text-align: center;
     margin-bottom: 30px;
     padding-bottom: 20px;
-    border-bottom: 2px solid #e0e0e0;
+    border-bottom: 2px solid var(--primary-border);
 }
 
 .profile-header h2 {
@@ -429,7 +433,7 @@ body {
 }
 
 .profile-info {
-    background: #f9f9f9;
+    background: var(--primary-soft);
     padding: 20px;
     border-radius: 15px;
     margin-bottom: 25px;
@@ -440,7 +444,7 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 12px 0;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--primary-border);
 }
 
 .info-item:last-child {
@@ -448,7 +452,7 @@ body {
 }
 
 .info-label {
-    color: #666;
+    color: var(--text-muted);
     font-size: 13px;
     font-weight: 600;
 }
@@ -468,9 +472,9 @@ body {
 .month-filter-section {
     margin: 20px 0 30px 0;
     padding: 15px 20px;
-    background: #f9f9f9;
+    background: var(--primary-soft);
     border-radius: 12px;
-    border: 2px solid #e0e0e0;
+    border: 2px solid var(--primary-border);
 }
 
 .month-filter-section label {
@@ -484,7 +488,7 @@ body {
 .month-filter-section select {
     width: 100%;
     padding: 12px 15px;
-    border: 2px solid #e0e0e0;
+    border: 2px solid var(--primary-border);
     border-radius: 10px;
     font-size: 14px;
     background: white;
@@ -496,7 +500,7 @@ body {
 .month-filter-section select:focus {
     outline: none;
     border-color: var(--primary-dark);
-    box-shadow: 0 0 0 3px rgba(74, 139, 183, 0.2);
+    box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 .month-filter-section select:hover {
@@ -543,7 +547,7 @@ body {
 .form-group label {
     display: block;
     margin-bottom: 8px;
-    color: #333;
+    color: var(--secondary-color);
     font-weight: 600;
     font-size: 14px;
 }
@@ -553,7 +557,7 @@ body {
 .form-group textarea {
     width: 100%;
     padding: 12px 15px;
-    border: 2px solid #e0e0e0;
+    border: 2px solid var(--primary-border);
     border-radius: 10px;
     font-size: 14px;
     transition: all 0.3s;
@@ -570,7 +574,7 @@ body {
 .form-group textarea:focus {
     outline: none;
     border-color: var(--primary-dark);
-    box-shadow: 0 0 0 3px rgba(74, 139, 183, 0.2);
+    box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 /* RADIO GROUP FOR JENIS PULANG */
@@ -584,7 +588,7 @@ body {
     display: flex;
     align-items: center;
     padding: 12px 15px;
-    border: 2px solid #e0e0e0;
+    border: 2px solid var(--primary-border);
     border-radius: 10px;
     cursor: pointer;
     transition: all 0.3s;
@@ -593,7 +597,7 @@ body {
 
 .radio-option:hover {
     border-color: var(--primary-dark);
-    background: #f5f5f5;
+    background: var(--primary-soft);
 }
 
 .radio-option input[type="radio"] {
@@ -642,13 +646,16 @@ body {
 }
 
 .btn-login {
-    background: linear-gradient(135deg, var(--primary-dark), var(--secondary-color));
+    background: var(--secondary-color);
     color: white;
 }
+
 .btn-login:hover {
+    background: var(--primary-dark);
     transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(74, 139, 183, 0.3);
+    box-shadow: 0 10px 20px rgba(65, 105, 225, 0.3);
 }
+
 
 .btn-masuk {
     background: linear-gradient(135deg, var(--secondary-color), var(--primary-dark));
@@ -658,16 +665,17 @@ body {
 }
 .btn-masuk:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(25, 69, 107, 0.3);
+    box-shadow: 0 10px 20px rgba(65, 105, 225, 0.3);
 }
 
 .btn-logout {
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    background: linear-gradient(135deg, var(--primary-soft), #dce5ff);
     color: var(--secondary-color);
+    border: 2px solid var(--primary-border);
 }
 .btn-logout:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(74, 139, 183, 0.3);
+    box-shadow: 0 10px 20px rgba(65, 105, 225, 0.2);
 }
 
 .btn:disabled {
@@ -735,8 +743,8 @@ body {
     text-align: center;
     margin-top: 20px;
     padding-top: 20px;
-    border-top: 1px solid #e0e0e0;
-    color: #999;
+    border-top: 1px solid var(--primary-border);
+    color: #8090bc;
     font-size: 12px;
 }
 
