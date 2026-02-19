@@ -191,6 +191,16 @@ function logout() {
 // FUNGSI SHOW/HIDE PAGE
 // ========================================
 function showLoginPage() {
+    const clockElement = document.querySelector('.clock');
+    const headerElement = document.querySelector('.header');
+
+    if (clockElement) {
+        clockElement.style.display = 'block';
+    }
+    if (headerElement) {
+        headerElement.style.display = 'block';
+    }
+
     document.getElementById('loginPage').classList.add('show');
     document.getElementById('mainApp').style.display = 'none';
 }
@@ -204,12 +214,13 @@ function showMainApp() {
 function showPage(pageName) {
     const clockElement = document.querySelector('.clock');
     const headerElement = document.querySelector('.header');
+    const hideTopSection = pageName === 'profile' || pageName === 'riwayat';
 
     if (clockElement) {
-        clockElement.style.display = pageName === 'profile' ? 'none' : 'block';
+        clockElement.style.display = hideTopSection ? 'none' : 'block';
     }
     if (headerElement) {
-        headerElement.style.display = pageName === 'profile' ? 'none' : 'block';
+        headerElement.style.display = hideTopSection ? 'none' : 'block';
     }
 
     document.querySelectorAll('.page').forEach(page => {
